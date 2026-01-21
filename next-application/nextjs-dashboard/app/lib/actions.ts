@@ -109,15 +109,27 @@ export async function updateInvoice(
   redirect('/dashboard/invoices');
 }
 
-export async function deleteInvoice(id: string) {
+export async function deleteInvoice(id: string): Promise<void> {
   try {
     await sql`DELETE FROM invoices WHERE id = ${id}`;
   } catch (error) {
-    return { message: 'Database Error: Failed to Delete Invoice.' };
+    console.error('Failed to delete invoice:', error);
+    throw new Error('Database Error: Failed to Delete Invoice.');
   }
 
   revalidatePath('/dashboard/invoices');
   redirect('/dashboard/invoices');
+}
+
+// Server action wrapper to be used as a form `action`.
+export async function deleteInvoiceAction(formData: FormData): Promise<void> {
+  const id = formData.get('id');
+  if (!id || Array.isArray(id)) {
+    console.error('Invalid invoice id in formData:', id);
+    return;
+  }
+
+  await deleteInvoice(String(id));
 }
 
 export async function authenticate(
